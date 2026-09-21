@@ -1,0 +1,34 @@
+name = "email-sync-worker"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Cloudflare Workers AI binding — no key needed, this grants the Worker
+# access to run models under your Cloudflare account.
+[ai]
+binding = "AI"
+
+# Wakes the Worker every 5 minutes to check every user's chosen sync
+# schedule (see scheduled.ts) and run any syncs that are due. 5 minutes is
+# the check-in cadence, not the sync cadence — a user set to "daily" still
+# only actually syncs about once a day. 5 minutes is also the finest sync
+# option offered, so the check-in can't be any coarser than that.
+[triggers]
+crons = ["*/5 * * * *"]
+
+# Non-secret configuration. Real credentials go in Worker secrets instead
+# (see README.md) — never put the Firebase service account or the
+# token-encryption key in this file.
+[vars]
+# Comma-separated list of origins allowed to call this Worker.
+ALLOWED_ORIGINS = "https://your-app.example.com,http://localhost:5173"
+# Confidence thresholds (0-1). >= AUTO_IMPORT is imported automatically,
+# >= REVIEW and below AUTO_IMPORT goes to the review queue, below REVIEW
+# is discarded.
+CONFIDENCE_AUTO_IMPORT = "0.90"
+CONFIDENCE_REVIEW = "0.70"
+# Workers AI text-generation model used for transaction extraction. The
+# plain "llama-3.1-8b-instruct" model was deprecated 2026-05-30 and every
+# call to it started failing (silently misclassifying every email as "not a
+# transaction" — see extractTransactionFromEmail's catch-all fallback).
+AI_MODEL = "@cf/meta/llama-3.1-8b-instruct-fast"

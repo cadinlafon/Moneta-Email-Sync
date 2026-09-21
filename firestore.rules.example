@@ -1,0 +1,22 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Everything the email worker touches lives under users/{uid}/...
+    // The worker itself uses a service account (bypasses these rules), so
+    // these rules only govern what the *browser* can do. The rule below is
+    // the recommended one: each user reads/writes only their own data.
+    //
+    // NOTE: users/{uid}/email_connections/gmail holds the AES-GCM encrypted
+    // app password. If you'd rather the browser never read even the
+    // encrypted blob, replace the wildcard with per-collection rules that
+    // exclude email_connections (the UI gets its status from the worker's
+    // /email/status endpoint, not from Firestore directly).
+    match /users/{userId}/{collection}/{docId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId
+                         && collection != 'email_connections';
+    }
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}

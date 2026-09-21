@@ -1,0 +1,28 @@
+# Local-dev secrets for the Moneta email worker.
+# Copy this file to `.dev.vars` (gitignored) and fill in real values for
+# `wrangler dev`. In production, set the same names with `wrangler secret put
+# <NAME>` instead — never commit real secrets, and never put them in
+# wrangler.toml's [vars] since that file is plaintext and typically committed.
+#
+# Connecting Gmail currently uses IMAP + a Google App Password — a temporary
+# stand-in for real OAuth (see worker/README.md). There's no Google Cloud
+# project or API to enable for this path; the app password itself is
+# supplied per-user from the Settings UI, not configured here.
+
+# --- Firebase Admin (server-side Firestore + ID token verification) ---
+# Firebase Console > Project settings > Service accounts > Generate new
+# private key. Paste the entire downloaded JSON as a single-line string.
+# Used to mint a Google OAuth2 access token for the Firestore REST API —
+# the Worker never uses the Node firebase-admin SDK (Workers can't run it).
+FIREBASE_SERVICE_ACCOUNT=
+
+# Must match the Firebase project the main Moneta app uses
+# (VITE_FIREBASE_PROJECT_ID in the app's own .env) — used to verify that
+# incoming Firebase ID tokens were issued for the right project.
+FIREBASE_PROJECT_ID=
+
+# --- Secret-at-rest encryption ---
+# Random 32-byte key, base64-encoded, used to AES-GCM encrypt each user's
+# Gmail app password before it's stored in Firestore. Generate one with:
+#   openssl rand -base64 32
+TOKEN_ENCRYPTION_KEY=
